@@ -2,6 +2,8 @@ import numpy as np
 import random2
 from collections import Counter
 import time
+from comb import combinations
+from showCards import show_cards
 
 #  Функция активации гиперболический тангенс
 def tanh(x):
@@ -18,7 +20,7 @@ def sigmoid(x):
 #  Функция активации обратного распространения сигмоид
 def sigmoid2deriv(output):
   return output*(1-output)
-  
+
 #  Функция активации мягкий максимум (для одного примера - строки)
 def softmax4one(x):
   temp = np.exp (x)
@@ -31,23 +33,32 @@ def softmax(x):
     
 #  Создание таблицы позиции (входной таблицы для нейросети) и заполнение ее нулями
 tab2pos = np.full((275), 0)
+
 #  Создание таблицы 
 tab2pl = np.full((10, 12), 0)
+
 #  Количество скрытых узлов (нейронов)
 hidden_size = 2000
 hidden_size_hm = 150
+
 #  Веса первой нейросети, предсказывающей действие, связывающих входной слой со скрытым
 weights_01_w = 0.2 * np.random.random((275, hidden_size)) - 0.1
+
 #  Веса первой нейросети, предсказывающей действие, связывающих скрытый слой с выходным
 weights_12_w = 0.02 * np.random.random((hidden_size, 5)) - 0.01
+
 #  Веса второй нейросети, предсказывающей количество денег, связывающих входной слой со скрытым
 weights_01_hm = 0.02 * np.random.random((276, hidden_size_hm)) - 0.01
+
 #  Веса второй нейросети, предсказывающей количество денег, связывающих скрытый слой с выходным
 weights_12_hm = 0.02 * np.random.random((hidden_size_hm, 1)) - 0.01
+
 #  Альфа-коэф (скорость) первой нейросети
 alpha_w = 0.01
+
 #  Второй нейросети
 alpha_hm = 0.1
+
 #  Размер пакета
 batch_size = 100
 
@@ -90,54 +101,10 @@ with open('weights_12_hm.txt', 'r') as f:
 
 #  Создание списка с текстовыми ['3B', '4B', ... , '100B']
 #  Пока не используется
-bets=list()
+bets = list()
 for i in range(2,101):
-  y=str(i)
-  bets.append(y+'B')
-
-#  Функция для удаления дубликатов
-def double_del (a_list: list, b_list: list):
-  '''
-    Данная функция принимает два аргумента - списка, первый из которых содержит значения карт, а второй - масти. Длина обоих списков одинаковая.
-    Например у нас есть следующие карты:
-    - 6 пик
-    - 7 черви
-    - 7 крести
-    - 7 пик
-    - 8 пик
-    - 9 пик
-    Значит подается два списка:
-      [6, 7, 7, 7, 8, 9]
-      [3, 0, 2, 3, 3, 3]
-    Как нам понять что перед нами СтритФлеш-дро? 
-    Очевидно, что одним из вариантов будет найти разницу между каждыми двумя картами. Поэтому первым делом мы сортируем список с картами (в примере список уже представлен отсортированным).
-    А для того, чтобы найти именно разницу между уникальными значениями, без повторяющихся карт, мы должны удалить дубликаты.
-    Кроме того, нужно учесть, что в некоторых вариантах есть флеш-дро или флеш (это означает то, что дубликат со значением масти, которая повторяется 4 или более раз не должен быть удален).
-    Таким образом те 2 списка, которые указаны в текущей документации выше, должны быть преобразованы в 2 других списка БЕЗ ОДИНАКОВЫХ ЗНАЧЕНИЙ, СОХРАНЯЯ ПОПУЛЯРНУЮ МАСТЬ:
-      [6, 7, 8, 9]
-      [3, 3, 3, 3]
-    Были удалены две семерки с мастями черви и крести, а популярная масть (пики) сохранена.
-  '''
-  #  Выберем переменную i для начала отсчета (первый элемент списка всегда 0)
-  i = 0
-  #  Ниже переменная для окончания отсчета, она должна быть на единицу меньше, чем длина списка, так как сравниваться будут 2 близлежащих значения, а последний элемент сранивать больше не с чем
-  x = len(a_list) - 1
-  #  Ниже мы используем счетчик Counter, который подсчитывает количество мастей и сразу же используем его метод most_common (что переводится наиболее популярные). Записываем их в переменную mcmc
-  mcmc = Counter(b_list).most_common(1)
-  #  Далее найдем самую популярную масть. Необходимо помнить, что метод most_common возвращает самые повторяющиеся значения самыми первыми, однако так как аргументом к этому методу мы написали единицу, то метод оставит всего одно - самое популярное значение. Его то мы и запишем в эту же самую переменную mcmc
-  mcmc = mcmc[0][1]
-  while i < x:
-    if a_list[i] == a_list[i+1]: #  Если текущий элемент равен рядомстоящему
-       if b_list[i] == mcmc: #  Если текущий элемент с популярной мастью, то удалить рядомстоящий
-         del a_list[i+1]
-         del b_list[i+1]
-       else: #  Иначе удалить текущий
-           del a_list[i]
-           del b_list[i]
-       x -= 1 #  После удаления нужно уменьшить и окончание цикла, так как длина списков уменьшилась на 1 элемент
-       continue #  Увеличивать i, когда произошло удаление не стоит, тогда возникает проблема с трипс-стрит
-    i += 1 #  Если удалений не произошло, то увеличиваем шаг
-  return (a_list, b_list, len(a_list))
+  y = str(i)
+  bets.append(y + 'B')
   
 #  Словарь с обозначением "веса" комбинаций:
 #  Как трипс всегда больше пары, так и 3 всегда больше 1
@@ -168,22 +135,6 @@ c2w = {
 9 : 'Royal Flash'
 }
 
-'''
-#  Словарь количество аутов для дро
-weight_draw = {
-'NoDRAW' : 0,
-'RFDH' : 1,
-'SFDH' : 12,
-'SDH' : 4,
-'SFDHL' : 9,
-'RFDHH' : 9,
-'SDH' : 4,
-'SDL' : 8,
-'Flash Draw' : 9,
-'SFDL' : 15
-}
-'''
-
 #  Словарь с названием позиций
 position_dict = {
 0 : 'UTG1',
@@ -204,249 +155,14 @@ players_pos = {
 3 : (9, 8, 7),
 4 : (9, 8, 7, 6),
 5 : (9, 8, 7, 6, 5),
-6 : (9, 8, 7, 6, 5, 0),
-7 : (9, 8, 7, 6, 5, 2, 0),
-8 : (9, 8, 7, 6, 5, 3, 2, 0),
-9 : (9, 8, 7, 6, 5, 3, 2, 1, 0),
+6 : (9, 8, 7, 6, 5, 4),
+7 : (9, 8, 7, 6, 5, 4, 3),
+8 : (9, 8, 7, 6, 5, 4, 3, 0),
+9 : (9, 8, 7, 6, 5, 4, 3, 1, 0),
 10 : (9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 }
 
-#  Функция, считающая количество аутов для определенного дро
-def draw (a_list: list, b_list: list):
-  '''
-    Данная функция принимает два аргумента - списка, первый из которых содержит значения карт, а второй - масти. Списки должны быть отсортированны и к ним должна быть применена функция удаления дубликатов. Длина обоих списков одинаковая, а так же не должна быть ниже 4, так как минимально-возможное значение любого дро может быть только при наличии 4х карт. Так же хоть функция и называется дро, однако она ищет только дро-последовательности (а именно карты, которые представляют стрит-комбинации). Флеш-дро при этом ищется совсем по-другому и это единственное исключение из правил будет рассмотрено подробнее ниже.
-    Функция работает следующим образом:
-    Чтобы найти стрит-последовательность мы должны найти разницу между значениями близлежащих карт. Таким образом, если на вход подаются карты: 6, 7, 8, 10; то разницей между близлежащими картами будет: 1, 1, 2 (7 минус 6, 8 минус 7, 10 минус 8).
-    Как видно из примера выше подается список из 4х карт, а высчитывается список из 3х карт (на один меньше). Но и тут бывает исключение.
-    Рассмотрим случай, когда возможен самый минимальный стрит [A, 2, 3, 4, 5]. А точнее любая его модификация без одной карты (дро) [A, 2, 4, 5]. Так как список подается отсортированным, то в программном виде он подается в эту функцию в следующем виде: [2, 4, 5, 12]. Далее проверяется условие - если последняя карта туз и первая двойка, то добавить в список вычислений разницу 1: [1]
-    После этого добавляются стандартная разница между 2 и 4, 4 и 5, 5 и 12 - [1, 2, 1, 7]  
-    Так мы получили вычисляемый список длины такой же, как входной. Такое редкое свойство бывает только в случаях, когда первая карта 2 или 3, а последняя Туз.
-    Следующий момент, который мы не должны упустить из виду, это одинаковые масти. Если мы нашли стрит-дро, каким образом мы определяем являются ли эти карты дополнительно одинаковой масти (СтритФлеш-дро)? Мы смотрим на одинаковость мастей тех карт, которые стоят рядом друг с другом. Как отобразить это для машины? Если две рядомстоящие карты похожи, то мы должны добавить единицу, а если они различны, то ноль. По сути нас не интересуют сами масти как таковые, нас интересует их похожесть (одномастые/разномастные).
-    Таким образом (пример) нам подается список: [крести, крести, черви, крести] на выходе мы получаем: [1, 0, 0] (крести похожа с крести, крести НЕ похожа с черви, черви НЕ похожа с крести). Опять замечание: список вычислений всегда на единицу меньше входного (кроме случая, описанного выше).
-    Для более обширного понимания рассмотрим, как программа "видит" наши карты на входе и вычисляет промежуточные списки (список разности и список похожести):
-    
-    1 пример:
-      Значения карт: [0, 2, 3, 5, 7]
-      Масти карт:       [3, 2, 0, 0, 0] #  пики, крести, черви, черви, черви
-      1 список выч.:  [2, 1, 2, 2]
-      2 список выч.:  [0, 0, 1, 1]
-    
-    2 пример:
-      Значения карт: [0, 2, 3, 5, 12]
-      Масти карт:       [3, 2, 0, 0, 0] #  пики, крести, черви, черви, черви
-      1 список выч.:  [1, 2, 1, 2, 7]
-      2 список выч.:  [0, 0, 0, 1, 1]
-      
-    3 пример:
-      Значения карт: [5, 6, 7, 8, 11]
-      Масти карт:       [0, 0, 2, 0, 0] #  черви, черви, крести, черви, черви
-      1 список выч.:  [1, 1, 1, 3]
-      2 список выч.:  [1, 0, 0, 1]
-      
-    Как видно из последнего примера, независимо от того, что мастей черви во входном списке аж 4 штуки, во 2 списке вычислений отображены единицы, отражающие похожесть ТОЛЬКО близлежащих карт.
-    А первые два примера показывают разницу наличия/отсутствия комбинации с двойкой и тузом (двойка представлена как 0, а туз как 12).
-    
-    После того, как вычислены оба списка, мы начинаем искать сумму трех значений ПЕРВОГО списка вычислений (valueAnswer), перебирая эти суммы по мере прохождения по самому списку (круглыми скобками выделено прохождение по списку):
-      [(1, 2, 1), 4, 2] #  Сумма 4
-      [1, (2, 1, 4), 2] #  Сумма 7
-      [1, 2, (1, 4, 2)] #  Сумма 7
-    Параллельно таким же образом проходится 2 список вычислений (markAnswer).
-    Почему ищется сумма именно трех значений? Потому что три значения полностью отражают зависимость(!) четырех близлежащих карт.
-    
-  '''
-  valueAnswer = list() #  1 список вычислений
-  markAnswer = list() #  2 список вычислений
-  removal = 3
-  programDraw = 'NoDRAW'
-  
-  if a_list[0] == 0:
-    if a_list[-1] == 12:
-      if b_list[0] == b_list[-1]:
-        valueAnswer.append(1)
-        markAnswer.append(1)
-      else:
-        valueAnswer.append(1)
-        markAnswer.append(0)
-      removal -= 1
-  elif a_list[0] == 1:
-    if a_list[-1] == 12:
-      if b_list[0] == b_list[-1]:
-        valueAnswer.append(2)
-        markAnswer.append(1)
-      else:
-        valueAnswer.append(2)
-        markAnswer.append(0)
-      removal -= 1
 
-  for i in range(len(a_list)-1):
-    valueAnswer.append(a_list[i+1]-a_list[i])
-    if b_list[i+1] == b_list[i]:
-      markAnswer.append(1)
-    else:
-      markAnswer.append(0)
-  
-  for i in range(len(valueAnswer)-2):
-    sumValue3 = sum(valueAnswer[i:i+3])
-    sumMark3 = sum(markAnswer[i:i+3])
-    if (sumValue3 == 4):
-      if (sumMark3 == 3):
-        if (a_list[i + removal] == 12):
-          programDraw = 'RFDH'
-        else:
-          programDraw = 'SFDH'
-      else:
-        programDraw = 'SDH'
-    elif (sumValue3 == 3):
-      if (sumMark3 == 3):
-        if ((a_list[i] == 0) and (a_list[-1] == 12)):
-          programDraw = 'SFDHL'
-        elif (a_list[i + removal] == 12):
-          programDraw = 'RFDHH'
-        else:
-          programDraw = 'SFDL'
-      else:
-        programDraw = 'SDL'
-    
-  return programDraw
-      
-def queue (a_list, b_list):
-  valueAnswer = list()
-  markAnswer = list()
-  queueOutput = 'H. Card'
-  queueSum = 0
-  if a_list[0] == 0:
-    if a_list[-1] == 12:
-      if b_list[0] == b_list[-1]:
-        valueAnswer.append(1)
-        markAnswer.append(1)
-      else:
-        valueAnswer.append(1)
-        markAnswer.append(0)
-  elif a_list[0] == 1:
-    if a_list[-1] == 12:
-      if b_list[0] == b_list[-1]:
-        valueAnswer.append(2)
-        markAnswer.append(1)
-      else:
-        valueAnswer.append(2)
-        markAnswer.append(0)
-
-  for i in range(len(a_list)-1):
-    valueAnswer.append(a_list[i+1]-a_list[i])
-    if b_list[i+1] == b_list[i]:
-      markAnswer.append(1)
-    else:
-      markAnswer.append(0)
-
-  for i in range(len(valueAnswer)-3):
-    sumValue4 = sum(valueAnswer[i:i+4])
-    sumMark4 = sum(markAnswer[i:i+4])
-    if (sumValue4 == 4):
-      if (sumMark4 == 4):
-        if (a_list[i+3] == 12):
-          queueOutput = 'Royal Flash'
-        else:
-          queueOutput = 'Str. Flash'
-          queueSum = 0
-          queueSum = sum(a_list[i:i+5])
-      else:
-        queueOutput = 'Street'
-        queueSum = 0
-        queueSum = sum(a_list[i:i+5])
-    
-  return (queueOutput, queueSum)
-
-def combinations (a_list): #функция, вычисляющая комбинации
-  global weight_comb
-  a_list = sorted(a_list) #Сортирует входящий список
-  draw_dict = {
-    'NoDRAW' : 0,
-    'RFDH' : 9,
-    'SFDH' : 12,
-    'SDH' : 4,
-    'SFDHL' : 9,
-    'RFDHH' : 9,
-    'SDH' : 4,
-    'SDL' : 8,
-    'Flash Draw' : 9,
-    'SFDL' : 15
-  } #Словарь со значениями дро
-  values = list()
-  marks = list()
-  for i in a_list:
-    values.append(i // 4) #добавляем целочисленное деление на 4 (как значение карты)
-    marks.append(i%4) #добавляем остаток от деления на 4 (как обозначение масти)
-  mark_cnt = Counter(marks) #подсчитывает количество одинаковых значений
-  value_cnt = Counter(values) #подсчитывает количество одинаковых мастей
-  valueCommon = value_cnt.most_common(2) #записывает 2 самых частых значения в переменную valueCommon
-  markCommon = mark_cnt.most_common(2) #записывает 2 самых частых масти в переменную markCommon
-  outputComb = 'H. Card'
-  outputDraw = 'NoDRAW'
-  sumDeck = 0
-  if (valueCommon[0][1] == 2):
-    outputComb = 'Pair'
-    sumDeck = 0
-    sumDeck = valueCommon[0][0]
-    try:
-      if (valueCommon[1][1] == 2):
-        outputComb = 'T. Pairs'
-        sumDeck = valueCommon[0][0] + valueCommon[1][0]
-    except:
-      ''
-  if (valueCommon[0][1] == 3):
-    outputComb = 'Trips'
-    sumDeck = 0
-    sumDeck = valueCommon[0][0]
-  if (markCommon[0][1] == 5):
-    outputComb = 'Flash'
-    sumDeck = 0
-    i = 0
-    for j in range(len(a_list)-1, 0, -1):
-      if i == 5:
-        break
-      elif a_list[j] % 4 == markCommon[0][0]:
-        i += 1
-        sumDeck += a_list[j] // 4
-  try:
-    if ((valueCommon[0][1] == 3) and (valueCommon[1][1] == 2)):
-      outputComb = 'Full House'
-      sumDeck = 0
-      sumDeck = valueCommon[0][0] + valueCommon[1][0]
-  except:
-    ''
-  
-  if (valueCommon[0][1] == 4):
-    outputComb = 'Kare'
-    sumDeck = 0
-    sumDeck = valueCommon[0][0]
-    
-  if (markCommon[0][1] == 4):
-    outputDraw = 'Flash Draw'
-  
-  a,b,c = double_del(values,marks)
-    
-  if (c > 3):
-    testDraw = draw(a,b)
-    if (testDraw in ('SDH', 'SDL')):
-      if (outputDraw != 'Flash Draw'):
-        outputDraw = testDraw
-    elif (testDraw in ('RFDH', 'SFDH', 'SFDHL', 'RFDHH', 'SFDL')):
-        outputDraw = testDraw
-    
-  if (c > 4):
-    testQueue = queue(a,b)
-    if testQueue[0] == 'Street':
-      if (outputComb not in ('Kare', 'Full House', 'Flash')):
-        outputComb = testQueue[0]
-        sumDeck = 0
-        sumDeck = testQueue[1]
-    elif testQueue[0] in ('Royal Flash', 'Str. Flash'):
-      outputComb = testQueue[0]
-      sumDeck = 0
-      sumDeck = testQueue[1]
-        
-  return (draw_dict[outputDraw], outputComb, sumDeck)
-  
 def chart4hands(a_list):
   global tab2pl, x, mov_list, m_p
   rcmd=(
@@ -610,62 +326,6 @@ def chart4hands(a_list):
         
   return output
   
-def show_cards(a_list):
-  a_list = sorted(a_list)
-  
-  mark_dict = {
-  0 : '\u2665',
-  1 : '\u2666',
-  2 : '\u2663',
-  3 : '\u2660'
-  }
-  
-  val_dict = {
-  2 : '2',
-  3 : '3',
-  4 : '4',
-  5 : '5',
-  6 : '6',
-  7 : '7',
-  8 : '8',
-  9 : '9',
-  10 : 'T',
-  11 : 'J',
-  12 : 'Q',
-  13 : 'K',
-  14 : 'A'
-  }
-  b_list = []
-  for i in range(len(a_list)):
-    if i not in (0, 1):
-      if a_list[i] == 0:
-        continue
-    i = a_list[i]
-    b_list.append(val_dict[(i // 4) + 2] + mark_dict[i % 4])
-  return b_list
-  
-def get_cards(n):
-  global tab2pos, tab2pl, players_pos, removal_rnd, num_game
-  a_list = list()
-  while (len(a_list) < ((n * 2) + 5)):
-    i = random2.randint(0, 51)
-    if i not in a_list:
-      a_list.append(i)
-  a_list = np.array(a_list)
-  x = 0
-  pos2ind = {}
-  for i in range(players):
-    for k in range(5):
-      tab2pl[i][4 + k] = a_list[-5 + k]
-    for j in range(2):
-      tab2pl[i][j] = a_list[x]
-      x += 1
-    if tab2pl[i][1] > tab2pl[i][0]:
-      tab2pl[i][1], tab2pl[i][0] = tab2pl[i][0], tab2pl[i][1]
-    tab2pl[i][2] = players_pos[players][(i + removal_rnd + num_game) % players]
-    pos2ind[tab2pl[i][2]] = i
-  return pos2ind
-  
 def mov2opp(a_list):
   global j, x, tab2pos, players_pos
   bbet = tab2pos[23]
@@ -685,6 +345,7 @@ def mov2opp(a_list):
   mop = [all_Fold, all_FL, len(limp_pl), limp_pl, len(raise_pl), raise_pl]
   return mop
   
+#  Функция для определения количества ставки, каким действием эта ставка является и установки ставки в нужное место
 def set_bet(my_bet):
   global movies, tab2pos, tab2pl, x, pos2ind, fold_pl, not_fold, max_bet, not_raise, allin_pl
   out = False
@@ -806,21 +467,45 @@ def set_bet(my_bet):
     
   return (out, pos, tab2pos[155 + 10 * tab2pos[30] + tab2pos[31]])
   
+  
+#  Функция раздачи карт игрокам по позициям, принимает значение - количество игроков, возвращает словарь Позиция-Индекс  
+def get_cards(n):
+  global tab2pos, tab2pl, players_pos, removal_rnd, num_game, players
+  a_list = list()
+  while (len(a_list) < ((n * 2) + 5)):
+    i = random2.randint(0, 51)
+    if i not in a_list:
+      a_list.append(i)
+  a_list = np.array(a_list)
+  x = 0
+  pos2ind = {}
+  for i in range(players):
+    for k in range(5):
+      tab2pl[i][4 + k] = a_list[-5 + k]
+    for j in range(2):
+      tab2pl[i][j] = a_list[x]
+      x += 1
+    if tab2pl[i][1] > tab2pl[i][0]:
+      tab2pl[i][1], tab2pl[i][0] = tab2pl[i][0], tab2pl[i][1]
+    tab2pl[i][2] = players_pos[players][(i + removal_rnd + num_game) % players]
+    pos2ind[tab2pl[i][2]] = i
+  return pos2ind
+ 
 flag = False
 
 while True:
-  #Лобби, предложение зайти в игру
+  #  Лобби, предложение зайти в игру
   if flag:
     break
-  #Счетчик для полного выхода из программы
+  #  Счетчик для полного выхода из программы
   print()
   print('-Игра Техасский Холдем-')
   answer = input('Играем? n - для выхода\n')
   print()
   if (answer == 'n'):
     break
-  num_game = 0
-  l = 0
+  num_game = 0  #  Номер игры
+  l = 0  #  Номер первой строки для записи
   layer_0_w = np.zeros((batch_size, 275))
   layer_0_hm = np.zeros((batch_size, 276))
   w_true = np.zeros((batch_size, 5))
@@ -830,7 +515,6 @@ while True:
   my_mask[7:21] = 1
   my_mask[26] = 1
   my_mask[32] = 1
-  #Установка номера игры
   
   while True:
     if flag:
@@ -842,42 +526,40 @@ while True:
         break
         
   removal_rnd = random2.randint(0,tab2pos[28])
-  ''' Цикл для ввода количества игроков '''
   players = int(tab2pos[28])
   
   for i in range(players):
     tab2pl[i][3] = 200
-    #Количество денег
+    #  Количество денег
     
   while (players > 1):
-    #Здесь будет начинаться каждый сет
+    #  Здесь будет начинаться каждый сет
     if flag:
       break
-    tab2pos[:28]=0
-    tab2pos[29:]=0
+    tab2pos[:28] = 0
+    tab2pos[29:] = 0
     
     
     for i in range(10 - players):
       for j in range(24):
-        tab2pos[44 + 10 * j - i] = -2
-    #ОТСУТСТВУЮЩИЕ ИГРОКИ В -2
+        tab2pos[44 + 10 * j - i] = -2 #  ОТСУТСТВУЮЩИЕ ИГРОКИ В -2
     for i in range(5):
       tab2pos[2 + i] = 0
       tab2pos[9 + i] = 0
       tab2pos[16 + i] = 0
-    pos2ind = get_cards(players)
-    print(tab2pl)
+    pos2ind = get_cards(players)  #  Получаем словарь Позиция - Индекс и раздаем карты
     for i in range (players):
       deck = []
+      tab2pl[i][11] = 0
       for j in range(2):
         deck.append(tab2pl[i][j])
       for j in range(5):
         deck.append(tab2pl[i][4 + j])
       for k in range(7):
-        tab2pl[i][11] = 0
         tab2pl[i][11] += deck[k] // 4
-      movies, comb[i][0], tab2pl[i][10] = combinations(deck)
+      _, comb[i][0], tab2pl[i][10] = combinations(deck)
       tab2pl[i][9] = weight_comb[comb[i][0]]
+    print(tab2pl)
     
     movies = 0
     print('\n________________________________________________\n')

@@ -22,10 +22,10 @@ def softmax(x):
 	return temp / np.sum(temp, axis = 1, keepdims = True)
 
 batch_size = 100
-hidden_size = 2000
+hidden_size = 20000
 alpha_w = 0.001
 sizen = 33000
-sizeEnd = 35000
+sizeEnd = 37000
 '''weights_01_hm=0.02*np.random.random((276,hidden_size))-0.01
 weights_12_hm=0.02*np.random.random((hidden_size,1))-0.01
 alpha_hm = 0.1'''
@@ -57,6 +57,11 @@ t_train = t_w[0 : sizen]
 i_test = i_w[sizen : sizeEnd]
 i_test = np.array(i_test)
 t_test = t_w[sizen : sizeEnd]
+
+np.place(i_train, i_train == -2, -1)
+#np.place(i_train, i_train == -1, 0)
+np.place(i_test, i_test == -2, -1)
+#np.place(i_test, i_test == -1, 0)
 
 t_1_train = np.full((len(t_train), 5), 0)
 for i in range(len(t_train)):
@@ -116,12 +121,12 @@ while True:
 		layer_0_w_c = i_batch
 		#  layer_0_w_c *= my_mask
 		layer_1_w = tanh (layer_0_w_c.dot(weights_01_w))
-		dropout_mask = np.random.randint (2, size = layer_1_w.shape)
-		layer_1_w *= dropout_mask * 2
+		#dropout_mask = np.random.randint (2, size = layer_1_w.shape)
+#		layer_1_w *= dropout_mask * 2
 		layer_2_w = softmax (layer_1_w.dot(weights_12_w))
 		delta_2_w = (layer_2_w - t_batch) / batch_size
 		delta_1_w = delta_2_w.dot(weights_12_w.T) * tanh2deriv (layer_1_w)
-		delta_1_w *= dropout_mask
+		#delta_1_w *= dropout_mask
 		
 		correct_cnt = 0
 		for i in range(batch_size):

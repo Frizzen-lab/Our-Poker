@@ -198,7 +198,22 @@ def queue (a_list, b_list):
     return (queueOutput, queueSum)
 
 def combinations (a_list): #функция, вычисляющая комбинации
-    global weight_comb
+    #    Словарь с обозначением "веса" комбинаций:
+    #    Как трипс всегда больше пары, так и 3 всегда больше 1
+    weight_comb = {
+    'H. Card' : 0,
+    'Pair' : 1,
+    'T. Pairs' : 2,
+    'Trips' : 3,
+    'Street' : 4,
+    'Flash' : 5,
+    'Full House' : 6,
+    'Kare' : 7,
+    'Str. Flash' : 8,
+    'Royal Flash' : 9
+    }
+    
+    meanComb = 0
     a_list = sorted(a_list) #Сортирует входящий список
     draw_dict = {
         'NoDRAW' : 0,
@@ -227,19 +242,26 @@ def combinations (a_list): #функция, вычисляющая комбин�
         outputComb = 'Pair'
         sumDeck = 0
         sumDeck = valueCommon[0][0]
+        meanComb = 0
+        meanComb = valueCommon[0][0]
         try:
             if (valueCommon[1][1] == 2):
                 outputComb = 'T. Pairs'
                 sumDeck = valueCommon[0][0] + valueCommon[1][0]
+                meanComb = 0
+                meanComb = (valueCommon[0][0] + valueCommon[1][0]) / 2
         except:
             ''
     if (valueCommon[0][1] == 3):
         outputComb = 'Trips'
         sumDeck = 0
         sumDeck = valueCommon[0][0]
-    if (markCommon[0][1] == 5):
+        meanComb = 0
+        meanComb = valueCommon[0][0]
+    if (markCommon[0][1] >= 5):
         outputComb = 'Flash'
         sumDeck = 0
+        meanComb = 0
         i = 0
         for j in range(len(a_list)-1, 0, -1):
             if i == 5:
@@ -247,11 +269,15 @@ def combinations (a_list): #функция, вычисляющая комбин�
             elif a_list[j] % 4 == markCommon[0][0]:
                 i += 1
                 sumDeck += a_list[j] // 4
+            meanComb = sumDeck / 5
+                
     try:
         if ((valueCommon[0][1] == 3) and (valueCommon[1][1] == 2)):
             outputComb = 'Full House'
             sumDeck = 0
-            sumDeck = valueCommon[0][0] + valueCommon[1][0]
+            sumDeck = valueCommon[0][0] * 3 + valueCommon[1][0] * 2
+            meanComb = 0
+            meanComb = sumDeck / 5
     except:
         ''
     
@@ -260,7 +286,7 @@ def combinations (a_list): #функция, вычисляющая комбин�
         sumDeck = 0
         sumDeck = valueCommon[0][0]
         
-    if (markCommon[0][1] == 4):
+    if (markCommon[0][1] >= 4):
         outputDraw = 'Flash Draw'
     
     a,b,c = double_del(values,marks)
@@ -271,7 +297,7 @@ def combinations (a_list): #функция, вычисляющая комбин�
             if (outputDraw != 'Flash Draw'):
                 outputDraw = testDraw
         elif (testDraw in ('RFDH', 'SFDH', 'SFDHL', 'RFDHH', 'SFDL')):
-                outputDraw = testDraw
+            outputDraw = testDraw
         
     if (c > 4):
         testQueue = queue(a,b)
@@ -280,9 +306,128 @@ def combinations (a_list): #функция, вычисляющая комбин�
                 outputComb = testQueue[0]
                 sumDeck = 0
                 sumDeck = testQueue[1]
+                meanComb = 0
+                meanComb = sumDeck / 5
         elif testQueue[0] in ('Royal Flash', 'Str. Flash'):
             outputComb = testQueue[0]
             sumDeck = 0
             sumDeck = testQueue[1]
+            meanComb = 0
+            meanComb = sumDeck / 5
                 
-    return (draw_dict[outputDraw], outputComb, sumDeck)
+    return (draw_dict[outputDraw], weight_comb[outputComb], sumDeck, meanComb)
+    
+def m_drawBoard (a_list: list, b_list: list):
+    valueAnswer = list() #    1 список вычислений
+    markAnswer = list() #    2 список вычислений
+    removal = 2
+    programDraw = 0
+    
+    if a_list[0] == 0:
+        if a_list[-1] == 12:
+            if b_list[0] == b_list[-1]:
+                valueAnswer.append(1)
+                markAnswer.append(1)
+            else:
+                valueAnswer.append(1)
+                markAnswer.append(0)
+            removal -= 1
+    elif a_list[0] == 1:
+        if a_list[-1] == 12:
+            if b_list[0] == b_list[-1]:
+                valueAnswer.append(2)
+                markAnswer.append(1)
+            else:
+                valueAnswer.append(2)
+                markAnswer.append(0)
+            removal -= 1
+
+    for i in range(len(a_list)-1):
+        valueAnswer.append(a_list[i+1]-a_list[i])
+        if b_list[i+1] == b_list[i]:
+            markAnswer.append(1)
+        else:
+            markAnswer.append(0)
+    
+    for i in range(len(valueAnswer)-1):
+        sumValue2 = sum(valueAnswer[i:i+2])
+        sumMark2 = sum(markAnswer[i:i+2])
+        if (sumValue2 == 2):
+            if (sumMark2 == 2):
+                if ((a_list[i] == 0) and (a_list[-1] == 12)):
+                    programDraw = 13
+                elif (a_list[i + removal] == 12):
+                    programDraw = 12
+                else:
+                    programDraw = 15
+            else:
+                programDraw = 8
+        elif (sumValue2 == 3):
+            if (sumMark2 == 2):
+                if (((a_list[i] == 0) or (a_list[i] == 1)) and (a_list[-1] == 12)):
+                    programDraw = 9
+                elif (a_list[i + removal] == 12):
+                    programDraw = 9
+                else:
+                    programDraw = 11
+            else:
+                programDraw = 6
+        elif (sumValue2 == 4):
+            if (sumMark2 == 2):
+                if (((a_list[i] == 0) or (a_list[i] == 1)) and (a_list[-1] == 12)):
+                    programDraw = 7
+                elif (a_list[i + removal] == 12):
+                    programDraw = 7
+                else:
+                    programDraw = 10
+            else:
+                programDraw = 5
+        
+    return programDraw
+    
+def parComb(a_list):
+    pocketCards = a_list[:2] #  Карманные карты
+    boardCards = a_list[2:] #  Карты на борде
+    card1, card2, card1draw, card2draw, kicker = (0, 0, 0, 0, 0) #  Переменные для определения карт, участвующих в комбинациях и дро
+    
+    drawBoard, combBoard, sumBoard, meanBoard = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего на борде
+    
+    boardCards.append(pocketCards[0]) #  Добавление одной карты к списку карт борда
+    
+    draw1card, comb1card, sum1card, mean1card = combinations(boardCards) #  Определение дро, комбинации,суммы и среднего с первой картой
+    
+    del boardCards[-1] #  Удаление добавленной карты
+    boardCards.append(pocketCards[1]) #  Добавление второй карты
+    
+    draw2card, comb2card, sum2card, mean2card = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего со второй картой
+    
+    drawFull, combFull, sumFull, meanFull = combinations(a_list) #  Определение дро, комбинации, суммы и среднего с обеими картами
+    
+    #  --- Ниже вычисление если с первой картой больше, чем на борде И(!) больше, чем со второй
+    if comb1card > combBoard and comb1card > comb2card:
+        card1 = pocketCards[0]
+        kicker = pocketCards[1]
+        
+    #  --- Ниже вычисление если со второй картой больше, чем на борде И(!) больше, чем с первой. Использован блок if,а не elif, потому что условия взаимоисключающие
+    if comb2card > combBoard and comb2card > comb1card:
+        card2 = pocketCards[1]
+        kicker = pocketCards[0]
+        
+    #  --- Ниже вычисление если полная больше, чем на борде И(!) больше, чем с первой И(!) больше, чем со второй. Использован блок if,а не elif, потому что это условие поглощает первые два
+    if combFull > combBoard and combFull > comb1card and combFull > comb2card:
+        card1 = pocketCards[0]
+        card2 = pocketCards[1]
+        kicker = 0
+    
+    #  --- Ниже аналогичная ситуация для определения карт, участвующих в дро
+    if draw1card > drawBoard and draw1card > draw2card:
+        card1draw = pocketCards[0]
+        
+    if draw2card > drawBoard and draw2card > draw1card:
+        card2draw = pocketCards[1]
+        
+    if drawFull > drawBoard and drawFull > draw1card and drawFull > draw2card:
+        card1draw = pocketCards[0]
+        card2draw = pocketCards[1]
+    
+    return drawFull, combFull, sumFull, meanFull, card1, card2, kicker, card1draw, card2draw

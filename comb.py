@@ -197,9 +197,11 @@ def queue (a_list, b_list):
         
     return (queueOutput, queueSum)
 
-def combinations (a_list): #функция, вычисляющая комбинации
-    #    Словарь с обозначением "веса" комбинаций:
-    #    Как трипс всегда больше пары, так и 3 всегда больше 1
+def combinations (a_list): 
+    #  Функция, вычисляющая комбинации
+    #  Словарь с обозначением "веса" комбинаций:
+    #  Как трипс всегда больше пары, так и 3 всегда больше 1
+    
     weight_comb = {
     'H. Card' : 0,
     'Pair' : 1,
@@ -214,7 +216,8 @@ def combinations (a_list): #функция, вычисляющая комбин�
     }
     
     meanComb = 0
-    a_list = sorted(a_list) #Сортирует входящий список
+    kicker = -1
+    a_list = sorted(a_list) #  Сортирует входящий список
     draw_dict = {
         'NoDRAW' : 0,
         'RFDH' : 9,
@@ -233,8 +236,8 @@ def combinations (a_list): #функция, вычисляющая комбин�
         marks.append(i % 4) #добавляем остаток от деления на 4 (как обозначение масти)
     mark_cnt = Counter(marks) #подсчитывает количество одинаковых значений
     value_cnt = Counter(values) #подсчитывает количество одинаковых мастей
-    valueCommon = value_cnt.most_common(2) #записывает 2 самых частых значения в переменную valueCommon
-    markCommon = mark_cnt.most_common(2) #записывает 2 самых частых масти в переменную markCommon
+    valueCommon = value_cnt.most_common() #записывает 2 самых частых значения в переменную valueCommon
+    markCommon = mark_cnt.most_common() #записывает 2 самых частых масти в переменную markCommon
     outputComb = 'H. Card'
     outputDraw = 'NoDRAW'
     sumDeck = 0
@@ -251,7 +254,7 @@ def combinations (a_list): #функция, вычисляющая комбин�
                 meanComb = 0
                 meanComb = (valueCommon[0][0] + valueCommon[1][0]) / 2
         except:
-            ''
+            pass
     if (valueCommon[0][1] == 3):
         outputComb = 'Trips'
         sumDeck = 0
@@ -279,7 +282,7 @@ def combinations (a_list): #функция, вычисляющая комбин�
             meanComb = 0
             meanComb = sumDeck / 5
     except:
-        ''
+        pass
     
     if (valueCommon[0][1] == 4):
         outputComb = 'Kare'
@@ -314,8 +317,14 @@ def combinations (a_list): #функция, вычисляющая комбин�
             sumDeck = testQueue[1]
             meanComb = 0
             meanComb = sumDeck / 5
+            
+        if weight_comb[outputComb] in (0, 1, 2, 3):
+            for i in range(len(valueCommon) - 1, -1, -1):
+                if valueCommon[i][1] == 1:
+                    kicker = valueCommon[i][0]
+                    break
                 
-    return (draw_dict[outputDraw], weight_comb[outputComb], sumDeck, meanComb)
+    return (draw_dict[outputDraw], weight_comb[outputComb], sumDeck, meanComb, kicker)
     
 def m_drawBoard (a_list: list, b_list: list):
     valueAnswer = list() #    1 список вычислений
@@ -386,32 +395,38 @@ def m_drawBoard (a_list: list, b_list: list):
     return programDraw
     
 def parComb(a_list):
-    pocketCards = a_list[:2] #  Карманные карты
-    boardCards = a_list[2:] #  Карты на борде
+    pocketCards = list()
+    boardCards = list()
+    for i in range(2):
+        pocketCards.append(a_list[i]) #  Карманные карты
+    for i in range(5):
+        boardCards.append(a_list[2+i]) #  Карты на борде
     card1, card2, card1draw, card2draw, kicker = (0, 0, 0, 0, 0) #  Переменные для определения карт, участвующих в комбинациях и дро
     
-    drawBoard, combBoard, sumBoard, meanBoard = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего на борде
+    drawBoard, combBoard, sumBoard, meanBoard, kickerBoard = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего на борде
     
     boardCards.append(pocketCards[0]) #  Добавление одной карты к списку карт борда
     
-    draw1card, comb1card, sum1card, mean1card = combinations(boardCards) #  Определение дро, комбинации,суммы и среднего с первой картой
+    draw1card, comb1card, sum1card, mean1card, kicker1card = combinations(boardCards) #  Определение дро, комбинации,суммы и среднего с первой картой
     
     del boardCards[-1] #  Удаление добавленной карты
     boardCards.append(pocketCards[1]) #  Добавление второй карты
     
-    draw2card, comb2card, sum2card, mean2card = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего со второй картой
+    draw2card, comb2card, sum2card, mean2card, kicker2card = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего со второй картой
     
-    drawFull, combFull, sumFull, meanFull = combinations(a_list) #  Определение дро, комбинации, суммы и среднего с обеими картами
+    drawFull, combFull, sumFull, meanFull, kickerFull = combinations(a_list) #  Определение дро, комбинации, суммы и среднего с обеими картами
     
     #  --- Ниже вычисление если с первой картой больше, чем на борде И(!) больше, чем со второй
     if comb1card > combBoard and comb1card > comb2card:
         card1 = pocketCards[0]
-        kicker = pocketCards[1]
+        if pocketCards[1] >= kickerFull:
+            kicker = pocketCards[1]
         
     #  --- Ниже вычисление если со второй картой больше, чем на борде И(!) больше, чем с первой. Использован блок if,а не elif, потому что условия взаимоисключающие
     if comb2card > combBoard and comb2card > comb1card:
         card2 = pocketCards[1]
-        kicker = pocketCards[0]
+        if pocketCards[0] >= kickerFull:
+            kicker = pocketCards[0]
         
     #  --- Ниже вычисление если полная больше, чем на борде И(!) больше, чем с первой И(!) больше, чем со второй. Использован блок if,а не elif, потому что это условие поглощает первые два
     if combFull > combBoard and combFull > comb1card and combFull > comb2card:
@@ -430,4 +445,4 @@ def parComb(a_list):
         card1draw = pocketCards[0]
         card2draw = pocketCards[1]
     
-    return drawFull, combFull, sumFull, meanFull, card1, card2, kicker, card1draw, card2draw
+    return drawFull, combFull, sumFull, meanFull, card1 + 4, card2 + 4, kicker + 4, card1draw + 4, card2draw + 4

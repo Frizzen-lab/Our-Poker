@@ -2,7 +2,7 @@ import numpy as np
 import random2
 from collections import Counter
 import time
-from comb import combinations
+from comb import parComb
 from showCards import show_cards
 from botPoker import botPoker
 
@@ -33,7 +33,20 @@ def softmax(x):
     return temp / np.sum(temp, axis = 1, keepdims = True)
         
 #    Создание таблицы позиции (входной таблицы для нейросети) и заполнение ее нулями
-tab2pos = np.full((275), 0)
+tab2pos = np.full((300), 0)
+'''
+  Даётся объяснение каждому элементу таблицы
+  ...
+  [275] - дро
+  [276] - комбинация
+  [277] - сумма комбинации
+  [278] - среднее комбинации
+  [279] - карта 1 в комбинации
+  [280] - карта 2 в комбинации
+  [281] - кикер
+  [282] - карта 1 в дро
+  [283] - карта 2 в дро
+'''
 
 #    Создание таблицы 
 tab2pl = np.full((10, 12), 0)
@@ -43,13 +56,13 @@ hidden_size = 2000
 hidden_size_hm = 150
 
 #    Веса первой нейросети, предсказывающей действие, связывающих входной слой со скрытым
-weights_01_w = 0.2 * np.random.random((275, hidden_size)) - 0.1
+weights_01_w = 0.2 * np.random.random((300, hidden_size)) - 0.1
 
 #    Веса первой нейросети, предсказывающей действие, связывающих скрытый слой с выходным
 weights_12_w = 0.02 * np.random.random((hidden_size, 5)) - 0.01
 
 #    Веса второй нейросети, предсказывающей количество денег, связывающих входной слой со скрытым
-weights_01_hm = 0.02 * np.random.random((276, hidden_size_hm)) - 0.01
+weights_01_hm = 0.02 * np.random.random((301, hidden_size_hm)) - 0.01
 
 #    Веса второй нейросети, предсказывающей количество денег, связывающих скрытый слой с выходным
 weights_12_hm = 0.02 * np.random.random((hidden_size_hm, 1)) - 0.01
@@ -64,41 +77,41 @@ alpha_hm = 0.1
 batch_size = 100
 
 #    Ниже идет по порядку открытие файлов с весами и преобразование текста в числа с помощью циклов
-with open('weights_01_w.txt', 'r') as f:
-    w01w = f.readlines()
-    for i in w01w:
-        w01w = i.split()
-    for i in range(len(w01w)):
-        w01w[i] = float(w01w[i])
-    w01w = np.array(w01w)
-    weights_01_w = w01w.reshape(weights_01_w.shape)
-    
-with open('weights_12_w.txt', 'r') as f:
-    w12w = f.readlines()
-    for i in w12w:
-        w12w = i.split()
-    for i in range(len(w12w)):
-        w12w[i] = float(w12w[i])
-    w12w = np.array(w12w)
-    weights_12_w = w12w.reshape(weights_12_w.shape)
-    
-with open('weights_01_hm.txt', 'r') as f:
-    w01hm = f.readlines()
-    for i in w01hm:
-        w01hm = i.split()
-    for i in range(len(w01hm)):
-        w01hm[i] = float(w01hm[i])
-    w01hm = np.array(w01hm)
-    weights_01_hm = w01hm.reshape(weights_01_hm.shape)
-    
-with open('weights_12_hm.txt', 'r') as f:
-    w12hm = f.readlines()
-    for i in w12hm:
-        w12hm = i.split()
-    for i in range(len(w12hm)):
-        w12hm[i] = float(w12hm[i])
-    w12hm = np.array(w12hm)
-    weights_12_hm = w12hm.reshape(weights_12_hm.shape)
+#with open('weights_01_w.txt', 'r') as f:
+#    w01w = f.readlines()
+#    for i in w01w:
+#        w01w = i.split()
+#    for i in range(len(w01w)):
+#        w01w[i] = float(w01w[i])
+#    w01w = np.array(w01w)
+#    weights_01_w = w01w.reshape(weights_01_w.shape)
+#    
+#with open('weights_12_w.txt', 'r') as f:
+#    w12w = f.readlines()
+#    for i in w12w:
+#        w12w = i.split()
+#    for i in range(len(w12w)):
+#        w12w[i] = float(w12w[i])
+#    w12w = np.array(w12w)
+#    weights_12_w = w12w.reshape(weights_12_w.shape)
+#    
+#with open('weights_01_hm.txt', 'r') as f:
+#    w01hm = f.readlines()
+#    for i in w01hm:
+#        w01hm = i.split()
+#    for i in range(len(w01hm)):
+#        w01hm[i] = float(w01hm[i])
+#    w01hm = np.array(w01hm)
+#    weights_01_hm = w01hm.reshape(weights_01_hm.shape)
+#    
+#with open('weights_12_hm.txt', 'r') as f:
+#    w12hm = f.readlines()
+#    for i in w12hm:
+#        w12hm = i.split()
+#    for i in range(len(w12hm)):
+#        w12hm[i] = float(w12hm[i])
+#    w12hm = np.array(w12hm)
+#    weights_12_hm = w12hm.reshape(weights_12_hm.shape)
 
 #    Создание списка с текстовыми ['3B', '4B', ... , '100B']
 #    Пока не используется
@@ -106,21 +119,6 @@ bets = list()
 for i in range(2,101):
     y = str(i)
     bets.append(y + 'B')
-    
-#    Словарь с обозначением "веса" комбинаций:
-#    Как трипс всегда больше пары, так и 3 всегда больше 1
-weight_comb = {
-'H. Card' : 0,
-'Pair' : 1,
-'T. Pairs' : 2,
-'Trips' : 3,
-'Street' : 4,
-'Flash' : 5,
-'Full House' : 6,
-'Kare' : 7,
-'Str. Flash' : 8,
-'Royal Flash' : 9
-}
 
 #    Словарь "обратного" веса (для показа комбинации пользователю)
 c2w = {
@@ -508,12 +506,12 @@ while True:
         break
     num_game = 0    #    Номер игры
     l = 0    #    Номер первой строки для записи
-    layer_0_w = np.zeros((batch_size, 275))
-    layer_0_hm = np.zeros((batch_size, 276))
+    layer_0_w = np.zeros((batch_size, 300))
+    layer_0_hm = np.zeros((batch_size, 301))
     w_true = np.zeros((batch_size, 5))
     hm_true = np.zeros((batch_size, 1))
     comb = np.full((10, 1), 'No Combination')
-    my_mask = np.full((275), 0)
+    my_mask = np.full((300), 0)
     my_mask[7:21] = 1
     my_mask[26] = 1
     my_mask[32] = 1
@@ -557,10 +555,8 @@ while True:
                 deck.append(tab2pl[i][j])
             for j in range(5):
                 deck.append(tab2pl[i][4 + j])
-            for k in range(7):
-                tab2pl[i][11] += deck[k] // 4
-            _, comb[i][0], tab2pl[i][10] = combinations(deck)
-            tab2pl[i][9] = weight_comb[comb[i][0]]
+            _, tab2pl[i][9], tab2pl[i][10], _, _, _, tab2pl[i][11], _, _ = parComb(deck)
+            comb[i][0] = c2w[tab2pl[i][9]]
         print(tab2pl)
         
         movies = 0
@@ -772,11 +768,13 @@ while True:
                 
                 d_list = []
                 for i in tab2pos[0:7]:
-                    if i != 0:
+                    if i == 0:
+                        d_list.append(i)
+                    elif i != 0:
                         d_list.append(i - 4)
 
-                tab2pos[25], comb[x][0], tab2pos[27] = combinations(d_list)
-                tab2pos[26] = weight_comb[comb[x][0]]
+                tab2pos[275], tab2pos[276], tab2pos[277], tab2pos[278], tab2pos[279], tab2pos[280], tab2pos[281], tab2pos[282], tab2pos[283] = parComb(d_list)
+
                 print('________________________________________________')
                 print('Позиция: ' + str(position_dict[tab2pos[21]]) + '    Денег: ' +str(tab2pl[x][3]))
                 print('Банк: ' + str(tab2pos[33]) + '     Игроков: ' + str(players))

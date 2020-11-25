@@ -402,63 +402,67 @@ def m_drawBoard (a_list: list, b_list: list):
 def parComb(a_list):
   pocketCards = list()
   boardCards = list()
+  mDrBrd = 0
   for i in range(2):
     pocketCards.append(a_list[i]) #  Карманные карты
-  for i in range(5):
-    boardCards.append(a_list[2+i]) #  Карты на борде
-  card1, card2, card1draw, card2draw, kicker = (0, 0, 0, 0, 0) #  Переменные для определения карт, участвующих в комбинациях и дро
+  if len(a_list) > 3:
+    for i in range(len(a_list) - 2):
+      boardCards.append(a_list[2+i]) #  Карты на борде
+  card1, card2, card1draw, card2draw, kicker = (-4, -4, -4, -4, -4) #  Переменные для определения карт, участвующих в комбинациях и дро
+  if len(boardCards) > 2:
+    drawBoard, combBoard, sumBoard, meanBoard, kickerBoard = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего на борде
   
-  drawBoard, combBoard, sumBoard, meanBoard, kickerBoard = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего на борде
-  
-  listOne, listTwo = list(), list()
-  for i in boardCards:
-    listOne.append(i // 4)
-    listTwo.append(i % 4)
-  mDrBrd = m_drawBoard(listOne, listTwo)
+    listOne, listTwo = list(), list()
+    for i in boardCards:
+      listOne.append(i // 4)
+      listTwo.append(i % 4)
+    mDrBrd = m_drawBoard(listOne, listTwo)
   
   boardCards.append(pocketCards[0]) #  Добавление одной карты к списку карт борда
   
-  draw1card, comb1card, sum1card, mean1card, kicker1card = combinations(boardCards) #  Определение дро, комбинации,суммы и среднего с первой картой
+  if len(boardCards) > 3:
+    draw1card, comb1card, sum1card, mean1card, kicker1card = combinations(boardCards) #  Определение дро, комбинации,суммы и среднего с первой картой
   
   del boardCards[-1] #  Удаление добавленной карты
   boardCards.append(pocketCards[1]) #  Добавление второй карты
   
-  draw2card, comb2card, sum2card, mean2card, kicker2card = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего со второй картой
+  if len(boardCards) > 3:
+    draw2card, comb2card, sum2card, mean2card, kicker2card = combinations(boardCards) #  Определение дро, комбинации, суммы и среднего со второй картой
   
   drawFull, combFull, sumFull, meanFull, kickerFull = combinations(a_list) #  Определение дро, комбинации, суммы и среднего с обеими картами
   
   #  --- Ниже вычисление если с первой картой больше, чем на борде И(!) больше, чем со второй
-  if comb1card > combBoard and comb1card > comb2card:
-    card1 = pocketCards[0]
-    if pocketCards[1] >= kickerFull:
-      kicker = pocketCards[1]
+  if len(boardCards) > 3:
+    if comb1card > combBoard and comb1card > comb2card:
+      card1 = pocketCards[0]
+      card2 = -4
+      if pocketCards[1] >= kickerFull:
+        kicker = pocketCards[1]
     
   #  --- Ниже вычисление если со второй картой больше, чем на борде И(!) больше, чем с первой. Использован блок if,а не elif, потому что условия взаимоисключающие
-  if comb2card > combBoard and comb2card > comb1card:
-    card2 = pocketCards[1]
-    if pocketCards[0] >= kickerFull:
-      kicker = pocketCards[0]
+    if comb2card > combBoard and comb2card > comb1card:
+      card1 = -4
+      card2 = pocketCards[1]
+      if pocketCards[0] >= kickerFull:
+        kicker = pocketCards[0]
     
   #  --- Ниже вычисление если полная больше, чем на борде И(!) больше, чем с первой И(!) больше, чем со второй. Использован блок if,а не elif, потому что это условие поглощает первые два
-  if combFull > combBoard and combFull > comb1card and combFull > comb2card:
-    card1 = pocketCards[0]
-    card2 = pocketCards[1]
-    kicker = -1
+    if combFull > combBoard and combFull > comb1card and combFull > comb2card:
+      card1 = pocketCards[0]
+      card2 = pocketCards[1]
+      kicker = -4
   
   #  --- Ниже аналогичная ситуация для определения карт, участвующих в дро
-  if draw1card > drawBoard and draw1card > draw2card:
-    card1draw = pocketCards[0]
-    
-  if draw2card > drawBoard and draw2card > draw1card:
-    card2draw = pocketCards[1]
-    
-  if drawFull > drawBoard and drawFull > draw1card and drawFull > draw2card:
-    card1draw = pocketCards[0]
-    card2draw = pocketCards[1]
-    
-  if kicker == -1:
-    kicker = -8
+    if draw1card > drawBoard and draw1card > draw2card:
+      card1draw = pocketCards[0]
+      card2draw = -4
+      
+    if draw2card > drawBoard and draw2card > draw1card:
+      card1draw = -4
+      card2draw = pocketCards[1]
+      
+    if drawFull > drawBoard and drawFull > draw1card and drawFull > draw2card:
+      card1draw = pocketCards[0]
+      card2draw = pocketCards[1]
   
-  
-  
-  return drawFull, combFull, sumFull, meanFull, card1 + 4, card2 + 4, (kicker + 4) // 4, card1draw + 4, card2draw + 4, mDrBrd
+  return drawFull, combFull, sumFull, meanFull, (card1 + 4) // 4, (card2 + 4) // 4, (kicker + 4) // 4, (card1draw + 4) // 4, (card2draw + 4) // 4, mDrBrd

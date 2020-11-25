@@ -1,5 +1,6 @@
 from comb import combinations
 from collections import Counter
+import random2
 
 
 #  Старшие пары
@@ -1322,21 +1323,183 @@ chartDict = {
             }}
         }
         
-flopDict = {
+postFlopDict = {
+  9:('3B', 'All in', 'C'),
+  8:('3B', 'All in', 'C'),
+  7:('3B', 'All in', 'C'),
+  6:('3B', 'All in', 'C'),
+  5:{
+    'board':('3B', 'All in', 'C'),
+    '1card':{
+      'moreThanMean':{
+        1:('3B', 'Fold', 'Fold'),
+        2:('Check', 'Fold', 'Fold')
+        },
+      'lessThanMean':{
+        1:('Check', 'Fold', 'Fold'),
+        2:('Check', 'Fold', 'Fold')
+        }},
+    '2card':{
+      'moreThanMean':{
+        1:('3B', 'All in', 'C'),
+        2:('Check', 'All in', 'C')
+        },
+      'lessThanMean':{
+        1:('3B', 'Fold', 'Fold'),
+        2:('Check', 'Fold', 'Fold')
+        }}},
+  4:{
+    'drawBoard':{
+        1:('3B', 'All in', 'C'),
+        2:('Check', 'All in', 'C')
+        },
+    'noDrawBoard':{
+      'board':{
+        1:('3B', 'All in', 'C'),
+        2:('Check', 'All in', 'C')
+        },
+      '1card':{
+        'moreThanMean':{
+          1:('3B', 'All in', 'C'),
+          2:('Check', 'All in', 'C')
+          },
+        'lessThanMean':{
+          1:('3B', 'Fold', 'Fold'),
+          2:('Check', 'Fold', 'Fold')
+          }},
+      '2card':{
+        'moreThanMean':{
+          1:('3B', 'All in', 'C'),
+          2:('Check', 'All in', 'C')
+          },
+        'lessThanMean':{
+          1:('3B', 'Fold', 'Fold'),
+          2:('Check', 'Fold', 'Fold')
+          }}}},
+  3:{
+    'drawBoard':{
+      1:('3B', 'Fold', 'Fold'),
+      2:('Check', 'Fold', 'Fold')
+  },
+    'noDrawBoard':{
+      'board':{
+        1:('3B', 'Fold', 'Fold'),
+        2:('Check', 'Fold', 'Fold')
+        },
+      '1card':{
+        1:('3B', 'Fold', 'Fold'),
+        2:('Check', 'Fold', 'Fold')
+        },
+      '2card':{
+        1:('3B', 'All in', 'C'),
+        2:('Check', 'All in', 'C')
+          }}},
+  2:('Fold','Fold','Fold'),
+  1:('Fold','Fold','Fold'),
+  0:('Fold','Fold','Fold')
             }
             
-turnDict = {
-            }
+def getMove(tab369, rem):
+  move = -1
+  if tab369[276] in (0, 1, 2, 6, 7, 8, 9):
+    move = postFlopDict[tab369[276]][rem + tab369[30] % 3]
+  elif tab369[276] == 3:
+    if tab369[284] > 3:
+      if tab369[30] // 3 in (1, 3):
+        move = postFlopDict[tab369[276]]['drawBoard'][1][rem + tab369[30] % 3]
+      else:
+        move = postFlopDict[tab369[276]]['drawBoard'][2][rem + tab369[30] % 3]
+    else:
+      if tab369[279] != 0 and tab369[280] != 0:
+        if tab369[30] // 3 in (1,3):
+          move = postFlopDict[tab369[276]]['noDrawBoard']['2card'][1][rem + tab369[30] % 3]
+        else:
+          move = postFlopDict[tab369[276]]['noDrawBoard']['2card'][2][rem + tab369[30] % 3]
+      else:
+        if tab369[30] // 3 in (1,3):
+          move = postFlopDict[tab369[276]]['noDrawBoard']['board'][1][rem + tab369[30] % 3]
+        else:
+          move = postFlopDict[tab369[276]]['noDrawBoard']['board'][2][rem + tab369[30] % 3]
+  elif tab369[276] == 4:
+    if tab369[284] > 7:
+      if tab369[30] // 3 in (1, 3):
+        move = postFlopDict[tab369[276]]['drawBoard'][1][rem + tab369[30] % 3]
+      else:
+        move = postFlopDict[tab369[276]]['drawBoard'][2][rem + tab369[30] % 3]
+    else:
+      if tab369[279] == 0 and tab369[280] == 0:
+        if tab369[30] // 3 in (1, 3):
+          move = postFlopDict[tab369[276]]['noDrawBoard']['board'][1][rem + tab369[30] % 3]
+        else:
+          move = postFlopDict[tab369[276]]['noDrawBoard']['board'][2][rem + tab369[30] % 3]
+      elif (tab369[279] == 0 and tab369[280] != 0) or (tab369[279] != 0 and tab369[280] == 0):
+        if (tab369[279] > tab369[278] and tab369[280] == 0) or (tab369[279] == 0 and tab369[280] > tab369[278]):
+          if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['noDrawBoard']['1card']['moreThanMean'][1][rem + tab369[30] % 3]
+          else:
+            move = postFlopDict[tab369[276]]['noDrawBoard']['1card']['moreThanMean'][2][rem + tab369[30] % 3]
+        else:
+          if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['noDrawBoard']['1card']['lessThanMean'][1][rem + tab369[30] % 3]
+          else:
+            move = postFlopDict[tab369[276]]['noDrawBoard']['1card']['lessThanMean'][2][rem + tab369[30] % 3]
+      else:
+        if (tab369[279] > tab369[278] and tab369[280] > tab369[278]):
+          if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['noDrawBoard']['2card']['moreThanMean'][1][rem + tab369[30] % 3]
+          else:
+            move = postFlopDict[tab369[276]]['noDrawBoard']['2card']['moreThanMean'][2][rem + tab369[30] % 3]
+        else:
+          if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['noDrawBoard']['2card']['lessThanMean'][1][rem + tab369[30] % 3]
+          else:
+            move = postFlopDict[tab369[276]]['noDrawBoard']['2card']['lessThanMean'][2][rem + tab369[30] % 3]
+  elif tab369[276] == 5:
+    if tab369[279] == 0 and tab369[280] == 0:
+      move = postFlopDict[tab369[276]]['board'][rem + tab369[30] % 3]
+    elif (tab369[279] == 0 and tab369[280] != 0) or (tab369[279] != 0 and tab369[280] == 0):
+      if (tab369[279] > tab369[278] and tab369[280] == 0) or (tab369[279] == 0 and tab369[280] > tab369[278]):
+        if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['1card']['moreThanMean'][1][rem + tab369[30] % 3]
+        else:
+            move = postFlopDict[tab369[276]]['1card']['moreThanMean'][2][rem + tab369[30] % 3]
+      else:
+        if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['1card']['lessThanMean'][1][rem + tab369[30] % 3]
+        else:
+            move = postFlopDict[tab369[276]]['1card']['lessThanMean'][2][rem + tab369[30] % 3]
+    else:
+      if (tab369[279] > tab369[278] and tab369[280] > tab369[278]):
+        if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['2card']['moreThanMean'][1][rem + tab369[30] % 3]
+        else:
+            move = postFlopDict[tab369[276]]['2card']['moreThanMean'][2][rem + tab369[30] % 3]
+      else:
+        if tab369[30] // 3 in (1, 3):
+            move = postFlopDict[tab369[276]]['2card']['lessThanMean'][1][rem + tab369[30] % 3]
+        else:
+            move = postFlopDict[tab369[276]]['2card']['lessThanMean'][2][rem + tab369[30] % 3]
             
-riverDict = {
-            }
+  if move == 'Fold':
+    move = -1
+  elif move == 'Check':
+    move = 0
+  elif move == 'C':
+    move = 1
+  elif move == '3B':
+    move = 2
+  elif move == 'All in':
+    move = 3
+  
+  return move
+            
         
 def botPoker(tab248):
     howMany = -1
     move = -1
     #  --- Ниже логика бота на префлопе
     if tab248[30] in (0,1,2):
-        #  Ниже мы устанавливаем карманную руку и проверяем на словаре наличия без одномастности, если её нету, то проверяем с одномастностью
+        #  --- Ниже мы устанавливаем карманную руку и проверяем на словаре наличия без одномастности, если её нету, то проверяем с одномастностью
         pocketDeck = list()
         for i in range(7,9):
             pocketDeck.append(tab248[i] - 1)
@@ -1346,22 +1509,26 @@ def botPoker(tab248):
             pocketDeck = list(pocketDeck)
             pocketDeck.append(tab248[14]==tab248[15])
             pocketDeck = tuple(pocketDeck)
-        print(pocketDeck)
+
         #  --- Ниже логика игры, когда карманные карты есть в таблице
         if pocketDeck in availabilityList:
-            movies_cnt = Counter(tab248[155:tab248[31]])
+            movies_cnt = Counter(tab248[155:155 + tab248[31]])
             if 2 in movies_cnt or 3 in movies_cnt:
                 movDes = 'haveRaise'
             elif 1 in movies_cnt:
                 movDes = 'haveColl'
             else:
                 movDes = 'allFold'
-            #  Присваиваем актуальное значение переменной move
+            #  --- Присваиваем актуальное значение переменной move
             move = chartDict[pocketDeck][posDict[tab248[28]][tab248[21]]][movDes][tab248[30] % 3]
             
         #  --- Если карманных карт нет в таблице либо таблица выдала фолд в качестве рекомендации, используем пот-оддсы для префлопа
         if pocketDeck not in availabilityList or move == -1:
             diffCards = pocketDeck[1] - pocketDeck[0]
+            if len(pocketDeck) == 2:
+              pocketDeck = list(pocketDeck)
+              pocketDeck.append(tab248[14] == tab248[15])
+              pocketDeck = tuple(pocketDeck)
             if diffCards == 1:
                 if pocketDeck[2]:
                     potOdd = 'suitedCon'
@@ -1412,13 +1579,86 @@ def botPoker(tab248):
                 
     #  --- Ниже логика бота на флопе
     elif tab248[30] in (3,4,5):
-        pass
+      rnd = random2.randrange(0, 9)
+      if tab248[30] % 3 == 0:
+        if tab248[25] > tab248[31]:
+          if rnd == 1:
+            #  Ослиная ставка
+            move = getMove(tab248, 0)
+          else:
+            if tab248[32] == 0:
+              move = 0
+            else:
+              move = getMove(tab248, 0)
+        elif tab248[25] == tab248[31]:
+          if rnd == 1:
+            #  Bet
+            move = getMove(tab248, 0)
+          else:
+            move = 2
+        else:
+          #  Bet
+          move = getMove(tab248, 0)
+      elif tab248[30] % 3 == 1:
+        if tab248[65 + tab248[31]] > 0:
+          #  2 действие
+          move = getMove(tab248, 1)
+        else:
+          #  1 действие
+          move = getMove(tab248, 0)
+      else:
+        if tab248[276] > 5:
+          move = 1
+        else:
+          move = -1
+      
+      if move == -1 and tab248[275] > 0:
+        if tab248[32] != 0:
+          if tab248[33] / tab248[32] > potOdds_fl[tab248[275]]:
+            move = 1
+        elif tab248[33] > potOdds_fl[tab248[275]]:
+          move = 1
+            
     #  --- Ниже логика бота на тёрне
     elif tab248[30] in (6,7,8):
-        pass
+      rnd = random2.randrange(0, 9)
+      if tab248[30] % 3 == 0:
+        if tab248[25] == tab248[31]:
+          if tab248[32] == 0:
+            move = 0
+          else:
+            move = getMove(tab248, 0)
+        else:
+          if rnd == 1:
+            move = getMove(tab248, 0)
+          else:
+            if tab248[32] == 0:
+              move = 0
+            else:
+              move = getMove(tab248, 0)
+      elif tab248[30] % 3 == 1:
+        if tab248[95 + tab248[31]] > 0:
+          #  2 действие
+          move = getMove(tab248, 1)
+        else:
+          #  1 действие
+          move = getMove(tab248, 0)
+      else:
+        if tab248[276] > 5:
+          move = 1
+        else:
+          move = -1
+        
+      if move == -1 and tab248[275] > 0:
+        if tab248[32] != 0:
+          if tab248[33] / tab248[32] > potOdds_turn[tab248[275]]:
+            move = 1
+        elif tab248[33] > potOdds_turn[tab248[275]]:
+          move = 1
+          
     #  --- Ниже логика бота на ривере
     elif tab248[30] in (9,10,11):
-        pass
+      move = getMove(tab248, 0)
         
     if move == 'C20':
         if tab248[32]//tab248[23] < 21:
@@ -1438,3 +1678,5 @@ def botPoker(tab248):
         howMany = tab248[22]
     
     return howMany
+    
+#  прописать Пот-оддсы, если в дро участвуют карты игрока и если дро > 7, то 3б на флопе и чек на тёрне

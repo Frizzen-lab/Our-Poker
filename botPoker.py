@@ -236,8 +236,8 @@ posDict = {
         7:'late'
     },
     2:{
-        9:'blinds',
-        8:'blinds'
+        8:'blinds',
+        7:'blinds'
     }
 }
 
@@ -1616,8 +1616,8 @@ def botPoker(tab248):
         if tab248[32] != 0:
           if tab248[33] / tab248[32] > potOdds_fl[tab248[275]]:
             move = 1
-        elif tab248[33] > potOdds_fl[tab248[275]]:
-          move = 1
+        else:
+          move = 0
             
     #  --- Ниже логика бота на тёрне
     elif tab248[30] in (6,7,8):
@@ -1653,8 +1653,8 @@ def botPoker(tab248):
         if tab248[32] != 0:
           if tab248[33] / tab248[32] > potOdds_turn[tab248[275]]:
             move = 1
-        elif tab248[33] > potOdds_turn[tab248[275]]:
-          move = 1
+        else:
+          move = 0
           
     #  --- Ниже логика бота на ривере
     elif tab248[30] in (9,10,11):

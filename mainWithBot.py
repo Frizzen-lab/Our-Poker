@@ -343,417 +343,9 @@ def get_cards(n):
     tab2pl[i][2] = players_pos[players][(i + removal_rnd + num_game) % players]
     pos2ind[tab2pl[i][2]] = i
   return pos2ind
- 
-flag = False
-
-while True:
-  #  Лобби, предложение зайти в игру
-  if flag:
-    break
-  #  Счетчик для полного выхода из программы
-  print()
-  print('-ТРЕНИРОВКА НЕЙРОСЕТИ-')
-  answer = input('Будем? n - для выхода\n')
-  print()
-  if (answer == 'n'):
-    break
-  num_game = 0  #  Номер игры
-  playersStep = 0
-  l = 0  #  Номер первой строки для записи
-  layer_0_w = np.zeros((batch_size, 300))
-  layer_0_hm = np.zeros((batch_size, 301))
-  w_true = np.zeros((batch_size, 5))
-  hm_true = np.zeros((batch_size, 1))
-  comb = np.full((10, 1), 'No Combination')
-  
-  while True:
-    if flag:
-      break
-    answer = input('Сколько игроков будет за столом? от 2 до 10: ')
-    if answer.isdigit():
-      if int(answer) in list(range(2,11)):
-        tab2pos[28] = int(answer)
-        break
-        
-  removal_rnd = random2.randint(0,tab2pos[28])
-  players = int(tab2pos[28])
-  
-  for i in range(players):
-    tab2pl[i][3] = 200
-    #  Количество денег
-    
-  while (players > 1):
-    if flag:
-      break
-    #  Здесь будет начинаться каждый сет
-    tab2pos[28] = players
-    for i in range(players):
-      if tab2pl[i][3] == 0:
-        tab2pl[i][3] = 200
-
-    tab2pos[:28] = 0
-    tab2pos[29:] = 0
-    
-    
-#   for i in range(10 - players):
-#      for j in range(24):
-#        tab2pos[44 + 10 * j - i] = -2 #  ОТСУТСТВУЮЩИЕ ИГРОКИ В -2
-        
-    for i in range(5):
-      tab2pos[2 + i] = 0
-      tab2pos[9 + i] = 0
-      tab2pos[16 + i] = 0
-    pos2ind = get_cards(players)  #  Получаем словарь Позиция - Индекс и раздаем карты
-    for i in range (players):
-      deck = []
-      tab2pl[i][11] = 0
-      for j in range(2):
-        deck.append(tab2pl[i][j])
-      for j in range(5):
-        deck.append(tab2pl[i][4 + j])
-      _, tab2pl[i][9], tab2pl[i][10], _, _, _, tab2pl[i][11], _, _, _ = parComb(deck)
-      comb[i][0] = c2w[tab2pl[i][9]]
-    
-    movies = 0
-    ignrd = []
-    for i in range(10 - players):
-      if (10 - i) == 10:
-        ignrd.append(0)
-      else:
-        ignrd.append(10 - i)
-        
-    x = 0
-    fold_pl = list()
-    not_fold = list()
-    allin_pl = list()
-    tab2pos[29] = len(not_fold)
-    tab2pos[34] = len(allin_pl)
-    tab2pos[25] = -1
-    not_raise = 0
-    
-    if players == 2:
-      tab2pos[23] = 1
-      set_bet('b_blind')
-    else:
-      tab2pos[23] = 2
-      set_bet('s_blind')
-      set_bet('b_blind')
-    max_bet = int(tab2pos[23])
-    tab2pos[32] = max_bet
-    
-    while True:
-      if flag:
-        break
-      if (not_raise == (players-1)) or (len(not_fold) == 1 and len(fold_pl) == players - 1):
-        d_list = list()
-        for i in tab2pl[0][4:9]:
-          d_list.append(i)
-        if tab2pos[30] in (9, 10, 11):
-          win_pl = []
-          for i in range(players):
-            if i not in fold_pl:
-              if (len(win_pl) == 0):
-                win_pl.append(i)
-              elif tab2pl[i][9] > tab2pl[win_pl[0]][9]:
-                win_pl = []
-                win_pl.append(i)
-              elif tab2pl[i][9] == tab2pl[win_pl[0]][9]:
-                if tab2pl[i][10] > tab2pl[win_pl[0]][10]:
-                  win_pl = []
-                  win_pl.append(i)
-                elif tab2pl[i][10] == tab2pl[win_pl[0]][10]:
-                  if tab2pl[i][11] > tab2pl[win_pl[0]][11]:
-                    win_pl = []
-                    win_pl.append(i)
-                  elif tab2pl[i][11] == tab2pl[win_pl[0]][11]:
-                    win_pl.append(i)
-
-          win_money = tab2pos[33] // len(win_pl)
-          num_game += 1
-          for i in win_pl:
-            tab2pl[i][3] += win_money
-            
-          correct_pl = []
-          for i in range(players):
-            if tab2pl[i][3] == 0:
-              correct_pl.append(i)
-          
-          tab2pos[28] -= len(correct_pl)
-          players -= len(correct_pl)
-          
-          if playersStep < 900000:
-            players = 10 - (playersStep // 100000)
-          else:
-            flag = True
-            break
-
-          if len(correct_pl) > 0:
-            tab4tab2pl = tab2pl.copy()
-            m = 0
-            m_list = list(range(10))
-            for i in range(len(correct_pl)):
-              m_list.remove(correct_pl[i])
-            while m < len(m_list):
-              tab4tab2pl[m] = tab2pl[m_list[m]]
-              m += 1
-            for i in range(m,10):
-              for j in range(12):
-                tab4tab2pl[i][j] = 0
-            tab2pl = tab4tab2pl
-          break
-      not_raise =- 1
-      mov_list = list()
-      
-      while True:
-        if flag:
-          break
-          
-        tab2pos[30] = movies // players
-        tab2pos[31] = movies % players
-        m_p = movies % players
-        
-        if not_raise == players:
-          not_raise -= 1
-          
-        if len(not_fold) == 1 and len(fold_pl) == players - 1:
-          tab2pos[30] = 10
-          break
-          
-        if (not_raise == (players - 1)):
-          if tab2pos[30] not in (9, 10, 11):
-            movies = players * (3 + 3 * (tab2pos[30] // 3))
-            not_raise = -1
-            max_bet = 0
-            tab2pos[32] = max_bet
-          break
-          
-        if tab2pos[30] == 3 and tab2pos[31] == 0:
-          t = 0
-          for i in tab2pl[0][4:7]:
-            tab2pos[2 + t] = i + 4
-            t += 1
-          tab2pos[9:12] = tab2pos[2:5] // 4
-          tab2pos[16:19] = 1 + tab2pos[2:5] % 4
-          
-        elif tab2pos[30] == 6 and tab2pos[31] == 0:
-          tab2pos[5] = tab2pl[0][7] + 4
-          tab2pos[12] = tab2pos[5] // 4
-          tab2pos[19] = 1 + tab2pos[5] % 4
-          
-        elif tab2pos[30] == 9 and tab2pos[31] == 0:
-          tab2pos[6] = tab2pl[0][8] + 4
-          tab2pos[13] = tab2pos[6] // 4
-          tab2pos[20] = 1 + tab2pos[6] % 4
-          
-        j = (players * 18 - 1 - m_p) % players
-        x = pos2ind[players_pos[players][j]]
-        movies += 1
-        not_raise += 1
-        
-        if l == batch_size:
-          print(num_game, ' ' , playersStep)
-          l = 0
-          layer_0_w_c = layer_0_w.copy()
-          layer_1_w = tanh (layer_0_w_c.dot(weights_01_w))
-          dropout_mask = np.random.randint (2, size = layer_1_w.shape)
-          layer_1_w *= dropout_mask * 2
-          layer_2_w = softmax (layer_1_w.dot(weights_12_w))
-          delta_2_w = (layer_2_w - w_true) / batch_size
-          delta_1_w = delta_2_w.dot(weights_12_w.T) * tanh2deriv(layer_1_w)
-          delta_1_w *= dropout_mask
-          correct_cnt = 0
-          
-          for i in range(batch_size):
-            correct_cnt += int (np.argmax(layer_2_w[i : i+1]) == np.argmax(w_true[i : i+1]))
-            
-          print('ТОЧНОСТЬ: ' + str(correct_cnt / batch_size))
-          weights_12_w -= alpha_w * layer_1_w.T.dot(delta_2_w)
-          weights_01_w -= alpha_w * layer_0_w_c.T.dot(delta_1_w)
-          w_true = np.zeros((batch_size, 5))
-          
-          f = open('weights_12_w.txt', 'w')
-          for i in weights_12_w:
-            for j in i:
-              f.write(str(j) + ' ')
-          f.close()
-          
-          f = open('weights_01_w.txt', 'w')
-          for i in weights_01_w:
-            for j in i:
-              f.write(str(j) + ' ')
-          f.close()
-          
-          
-          layer_0_hm_c = layer_0_hm.copy()
-          layer_1_hm = tanh (layer_0_hm_c.dot(weights_01_hm))
-          dropout_mask = np.random.randint (2, size = layer_1_hm.shape)
-          layer_1_hm *= dropout_mask * 2
-          layer_2_hm = layer_1_hm.dot(weights_12_hm)
-          delta_2_hm = (layer_2_hm - hm_true) / batch_size
-          delta_1_hm = delta_2_hm.dot(weights_12_hm.T) * tanh2deriv(layer_1_hm)
-          delta_1_hm *= dropout_mask
-          weights_12_hm -= alpha_hm * layer_1_hm.T.dot(delta_2_hm)
-          weights_01_hm -= alpha_hm * layer_0_hm_c.T.dot(delta_1_hm)
-          hm_true = np.zeros((batch_size, 1))
-          
-          f = open('weights_12_hm.txt', 'w')
-          for i in weights_12_hm:
-            for j in i:
-              f.write(str(j) + ' ')
-          f.close()
-          
-          f = open('weights_01_hm.txt', 'w')
-          for i in weights_01_hm:
-            for j in i:
-              f.write(str(j) + ' ')
-          f.close()
-          
-          if playersStep == 100000:
-            flag = True
-            break
-
-          
-        
-        if x in fold_pl:
-          mov_list.append(-1)
-          continue
-          
-        if x in allin_pl:
-          continue
-          
-        if ((len(not_fold) - len(allin_pl)) == 1) and (len(fold_pl) == (players - (len(not_fold)))):
-          if (players - len(fold_pl) - len(allin_pl)) == 1:
-            not_raise += 1
-          if not_raise == (players - len(fold_pl) - len(allin_pl)):
-            continue
-        
-        t = 0
-        for i in tab2pl[x][0:2]:
-          tab2pos[0 + t] = i + 4
-          t += 1
-          
-        tab2pos[7:9] = tab2pos[0:2] // 4
-        tab2pos[14:16] = 1 + tab2pos[0:2] % 4
-        tab2pos[21] = tab2pl[x][2]
-        tab2pos[22] = tab2pl[x][3]
-        tab2pos[24] = tab2pos[22] // tab2pos[23]
-        
-        
-        d_list = []
-        for i in tab2pos[0:7]:
-          if i != 0:
-            d_list.append(i - 4)
-
-        tab2pos[275], tab2pos[276], tab2pos[277], tab2pos[278], tab2pos[279], tab2pos[280], tab2pos[281], tab2pos[282], tab2pos[283], tab2pos[284] = parComb(d_list)
-        
-        if tab2pos[275] <= 5:
-          if tab2pos[276] == 2:
-            tab2pos[275] = 4
-          elif tab2pos[276] == 3:
-            if tab2pos[30] // 3 == 1: #  Flop
-              tab2pos[275] == 7
-            elif tab2pos[30] // 3 == 2: #  Turn
-              tab2pos[275] = 10
-        
-        for i in range(10):
-          tab2pos[285 + i] = tab2pl[i][3] // tab2pos[23]  #  Добавить актуальный стек всех игроков с 285 по 294 элемент
-
-#        print(tab2pos[0:2])
-#        print(tab2pos[28])
-#        print('Активных игроков: ')
-#        print(tab2pos[29])
-#        print('Стадия, Игрок: ')
-#        print(tab2pos[30])
-#        print(tab2pos[31])
-#        print('Maxbet, Bank: ')
-#        print(tab2pos[32])
-#        print(tab2pos[33])
-#        print('Bet: ')
-#        print(tab2pos[35:65])
-#        print(tab2pos[65:95])
-#        print(tab2pos[95:125])
-#        print(tab2pos[125:155])
-#        print('Move: ')
-#        print(tab2pos[155:185])
-#        print(tab2pos[185:215])
-#        print(tab2pos[215:245])
-#        print(tab2pos[245:275])
-#        print('Draw, Comb, Sum, Mean, K1,K2,Kr')
-#        print(tab2pos[275])
-#        print(tab2pos[276])
-#        print(tab2pos[277])
-#        print(tab2pos[278])
-#        print(tab2pos[279])
-#        print(tab2pos[280])
-#        print(tab2pos[281])
-#        layer_000 = tab2pos.copy()
-#        layer_1_w = tanh (np.dot(layer_000, weights_01_w))
-#        layer_2_w = softmax4one (layer_1_w.dot(weights_12_w))
-#        print()
-#        print(layer_2_w)
-        
-        while True:
-          if tab2pos[30] in (2, 5, 8, 11):
-            answer = int(botPoker(tab2pos))
-            
-            if answer == -1:
-              answer = 'f'
-            
-            # answer = input('Только Coll(' + str(max_bet) + ')/Fold: ')
-            if answer in ('Coll', 'Fold', 'f', 'F', 'C', 'c') or type(answer) == int:
-              stb = set_bet(answer)
-              if stb[0]:
-                w_true[l][stb[2] + 1] = 1
-                hm_true[l] = stb[1]
-                layer_0_w[l] = tab2pos
-                layer_0_hm[l] = np.hstack ((tab2pos, np.array(stb[2])))
-#                print('Бот: ', answer)
-#                print('True: ', w_true[l])
-#                print('Hm: ', hm_true[l])
-                l += 1
-                #input()
-                break
-              else:
-                answer = input('Введите: ')
-                stb = set_bet(answer)
-                if stb[0]:
-                  #input()
-                  break
-          else:
-            answer = int(botPoker(tab2pos))
-            #answer = input('Check/Coll(' + str(max_bet) + ')/Fold/3B/All in: ')
-            
-            if answer == -1:
-              answer = 'f'
-
-            if tab2pos[30] in (0,1,2):
-              if answer not in ('1/3', '2/3', '1/4', '1/2', '3/4'):
-                stb = set_bet(answer)
-              else:
-                stb = set_bet(0)
-            else:
-              stb = set_bet(answer)
-              
-            if stb[0]:
-              if tab2pos[30] // 3 == 0 and stb[2] in (2, 3):
-                tab2pos[25] = tab2pos[31]
-              
-              if tab2pos[25] != -1 and stb[2] == -1 and tab2pos[31] == tab2pos[25]:
-                tab2pos[25] = -1
-                
-              w_true[l][stb[2] + 1] = 1
-              hm_true[l] = stb[1]
-              layer_0_w[l] = tab2pos
-              layer_0_hm[l] = np.hstack ((tab2pos, np.array(stb[2])))
-#              print('Бот: ', answer)
-#              print('True: ', w_true[l])
-#              print('Hm: ', hm_true[l])
-              l += 1
-              #input()
-              break
               
 
-#  --- НИЖЕ САМА ИГРА        
+#  --- НИЖЕ ИГРА        
 flag = False
 
 while True:
@@ -788,7 +380,7 @@ while True:
   players = int(tab2pos[28])
   
   for i in range(players):
-    tab2pl[i][3] = 200
+    tab2pl[i][3] = 20
     #  Количество денег
     
   while (players > 1):
@@ -999,96 +591,105 @@ while True:
         for i in range(10):
           tab2pos[285 + i] = tab2pl[i][3] // tab2pos[23]  #  Добавить актуальный стек всех игроков с 285 по 294 элемент
 
-        print('________________________________________________')
-        print('Позиция: ' + str(position_dict[tab2pos[21]]), end = '')
-        print('  Денег: ' + str(tab2pl[x][3]))
-        print('Банк: ' + str(tab2pos[33]), end = '')
-        print('  Игроков: ' + str(players))
-        print('До Вас: ', end = '')
-        if tab2pos[30] in (0, 1, 2):
-          i_bet = tab2pos[23]
-        else:
-          i_bet = 0
-        
-        for i in range(35 + 30 * (tab2pos[30] // 3), 35 + 10 * tab2pos[30] + tab2pos[31]):
-          if i % 10 in ignrd:
-            continue
-          elif tab2pos[i] == -1:
-            print('F>', end = '')
-          elif tab2pos[i] == 0:
-            print('Ch>', end = '')
-          elif tab2pos[i] > i_bet and i_bet != 0:
-            print(str(tab2pos[i] // i_bet) + 'B>', end = '')
-            i_bet = tab2pos[i]
-          elif tab2pos[i] == tab2pos[23]:
-            print('L>', end = '')
-            if i_bet != tab2pos[23]:
-              i_bet = tab2pos[23]
-          elif tab2pos[i] > i_bet:
-            print('R>', end = '')
-            i_bet = tab2pos[i]
-          elif tab2pos[i] == i_bet:
-            print('C>', end = '')
+        if x == 0:
+          print('________________________________________________')
+          print('Позиция: ' + str(position_dict[tab2pos[21]]), end = '')
+          print('  Денег: ' + str(tab2pl[x][3]))
+          print('Банк: ' + str(tab2pos[33]), end = '')
+          print('  Игроков: ' + str(players))
+          print('До Вас: ', end = '')
+          if tab2pos[30] in (0, 1, 2):
+            i_bet = tab2pos[23]
+          else:
+            i_bet = 0
+          
+          for i in range(35 + 30 * (tab2pos[30] // 3), 35 + 10 * tab2pos[30] + tab2pos[31]):
+            if tab2pos[i] == -1:
+              print('F>', end = '')
+            elif i % 10 in ignrd:
+              continue
+            elif tab2pos[i] == 0:
+              print('Ch>', end = '')
+            elif tab2pos[i] > i_bet and i_bet != 0:
+              print(str(tab2pos[i] // i_bet) + 'B>', end = '')
+              i_bet = tab2pos[i]
+            elif tab2pos[i] == tab2pos[23]:
+              print('L>', end = '')
+              if i_bet != tab2pos[23]:
+                i_bet = tab2pos[23]
+            elif tab2pos[i] > i_bet:
+              print('R>', end = '')
+              i_bet = tab2pos[i]
+            elif tab2pos[i] == i_bet:
+              print('C>', end = '')
             
-        print('\nВаши карты: ' + str(show_cards(d_list[0:2])))
-        
-        if tab2pos[30] not in (0, 1, 2):
-          print('Карты на столе: ' + str(show_cards(d_list[2:7])))
-          print('Дро: ' + str(tab2pos[275]) + ' аутов ' + '   Комбинация: ' + str(c2w[tab2pos[276]]))
+              
+          print('\nВаши карты: ' + str(show_cards(d_list[0:2])))
           
-        print('Уже поставлено: ' + str(tab2pos[35 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[45 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[55 + 30 * (tab2pos[30] // 3) + tab2pos[31]]), end = ' ')
-        
-        print('Не хватает: ' + str(max_bet - (tab2pos[35 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[45 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[55 + 30 * (tab2pos[30] // 3) + tab2pos[31]])))
+          if tab2pos[30] not in (0, 1, 2):
+            print('Карты на столе: ' + str(show_cards(d_list[2:7])))
+            print('Дро: ' + str(tab2pos[275]) + ' аутов ' + '   Комбинация: ' + str(c2w[tab2pos[276]]))
+            
+          print('Уже поставлено: ' + str(tab2pos[35 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[45 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[55 + 30 * (tab2pos[30] // 3) + tab2pos[31]]), end = ' ')
           
-        layer_0_w[l] = tab2pos.copy()
-        layer_1_w = tanh (np.dot(layer_0_w[l : l + 1], weights_01_w))
-        layer_2_w = softmax4one (layer_1_w.dot(weights_12_w))
-        
-        if np.argmax (layer_2_w) == 0:
-          outmove = 'Фолд'
-        elif np.argmax (layer_2_w) == 1:
-          outmove = 'Чекай'
-        elif np.argmax (layer_2_w) == 2:
-          outmove = 'Коллируй'
-        elif np.argmax (layer_2_w) == 3:
-          outmove = 'Рейзи'
-        else:
-          outmove = 'Алл Ин'
-
-        print('ДЕЙСТВИЕ: ' + outmove + ' ', end = '')
-        
-        l2w = np.argmax(layer_2_w)
-        layer_0_hm[l] = np.hstack((tab2pos.copy(), l2w))
-        layer_1_hm = tanh (layer_0_hm[l].dot(weights_01_hm))
-        layer_2_hm = layer_1_hm.dot(weights_12_hm)
-        print('СТАВКА: ' + str(layer_2_hm[0]))
-        print('ДО ОБУЧЕНИЯ: ' + str(batch_size - l) + ' ШАГОВ')
-        print('БОТ РЕКОМЕНДУЕТ: ', botPoker(tab2pos))
-        
-        while True:
-          if tab2pos[30] in (2, 5, 8, 11):
-            answer = input('Только Coll(' + str(max_bet) + ')/Fold: ')
-            if answer in ('Coll', 'Fold', 'f', 'F', 'C', 'c'):
-              stb = set_bet(answer)
+          print('Не хватает: ' + str(max_bet - (tab2pos[35 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[45 + 30 * (tab2pos[30] // 3) + tab2pos[31]] + tab2pos[55 + 30 * (tab2pos[30] // 3) + tab2pos[31]])))
+            
+#          layer_0_w[l] = tab2pos.copy()
+#          layer_1_w = tanh (np.dot(layer_0_w[l : l + 1], weights_01_w))
+#          layer_2_w = softmax4one (layer_1_w.dot(weights_12_w))
+#          
+#          if np.argmax (layer_2_w) == 0:
+#            outmove = 'Фолд'
+#          elif np.argmax (layer_2_w) == 1:
+#            outmove = 'Чекай'
+#          elif np.argmax (layer_2_w) == 2:
+#            outmove = 'Коллируй'
+#          elif np.argmax (layer_2_w) == 3:
+#            outmove = 'Рейзи'
+#          else:
+#            outmove = 'Алл Ин'
+#  
+#          print('ДЕЙСТВИЕ: ' + outmove + ' ', end = '')
+#          
+#          l2w = np.argmax(layer_2_w)
+#          layer_0_hm[l] = np.hstack((tab2pos.copy(), l2w))
+#          layer_1_hm = tanh (layer_0_hm[l].dot(weights_01_hm))
+#          layer_2_hm = layer_1_hm.dot(weights_12_hm)
+#          print('СТАВКА: ' + str(layer_2_hm[0]))
+#          print('ДО ОБУЧЕНИЯ: ' + str(batch_size - l) + ' ШАГОВ')
+#          print('БОТ РЕКОМЕНДУЕТ: ', botPoker(tab2pos))
+          
+          while True:
+            if tab2pos[30] in (2, 5, 8, 11):
+              answer = input('Только Coll(' + str(max_bet) + ')/Fold: ')
+              if answer in ('Coll', 'Fold', 'f', 'F', 'C', 'c'):
+                stb = set_bet(answer)
+                if stb[0]:
+                  mov_list.append(stb[1])
+                  break
+            else:
+              answer = input('Check/Coll(' + str(max_bet) + ')/Fold/3B/All in: ')
+              if tab2pos[30] in (0,1,2):
+                if answer not in ('1/3', '2/3', '1/4', '1/2', '3/4'):
+                  stb = set_bet(answer)
+                else:
+                  stb = set_bet(0)
+              else:
+                stb = set_bet(answer)
+                
               if stb[0]:
                 mov_list.append(stb[1])
+                
+                if tab2pos[30] // 3 == 0 and stb[2] in (2, 3):
+                  tab2pos[25] = tab2pos[31]
+                
+                if tab2pos[25] != -1 and stb[2] == -1 and tab2pos[31] == tab2pos[25]:
+                  tab2pos[25] = -1
                 break
-          else:
-            answer = input('Check/Coll(' + str(max_bet) + ')/Fold/3B/All in: ')
-            if tab2pos[30] in (0,1,2):
-              if answer not in ('1/3', '2/3', '1/4', '1/2', '3/4'):
-                stb = set_bet(answer)
-              else:
-                stb = set_bet(0)
-            else:
-              stb = set_bet(answer)
+        else:
+          answer = int(botPoker(tab2pos))
+            
+          if answer == -1:
+            answer = 'f'
               
-            if stb[0]:
-              mov_list.append(stb[1])
-              
-              if tab2pos[30] // 3 == 0 and stb[2] in (2, 3):
-                tab2pos[25] = tab2pos[31]
-              
-              if tab2pos[25] != -1 and stb[2] == -1 and tab2pos[31] == tab2pos[25]:
-                tab2pos[25] = -1
-              break
+          stb = set_bet(answer)
